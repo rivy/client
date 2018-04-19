@@ -157,11 +157,12 @@ func (s *Storage) ephemeralPurgeHelper(ctx context.Context, convID chat1.Convers
 				}
 				s.Debug(ctx, "skipping unexpired ephemeral msg: %v", msg.GetMessageID())
 			} else {
-				var emptyBody chat1.MessageBody
-				mvalid.MessageBody = emptyBody
-				exploded = append(exploded, chat1.NewMessageUnboxedWithValid(mvalid))
-				msgs[i] = chat1.NewMessageUnboxedWithValid(mvalid)
-				s.Debug(ctx, "purging ephemeral msg: %v", msg.GetMessageID())
+				msgPurged, assets := s.purgeMessage(mvalid)
+				s.Debug(ctx, "purging assets :%v", assets)
+				// todo queue up assets for deletion
+				exploded = append(exploded, msgPurged)
+				msgs[i] = msgPurged
+				s.Debug(ctx, "purging ephemeral msg: %v", msgPurged.GetMessageID())
 				continue
 			}
 		}

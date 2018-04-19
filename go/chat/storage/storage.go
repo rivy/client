@@ -427,10 +427,11 @@ func (s *Storage) updateAllSupersededBy(ctx context.Context, convID chat1.Conver
 				mvalid := superMsg.Valid()
 				mvalid.ServerHeader.SupersededBy = msgid
 				if msg.GetMessageType() == chat1.MessageType_DELETE {
-					var emptyBody chat1.MessageBody
-					mvalid.MessageBody = emptyBody
+					msgPurged, _ := s.purgeMessage(mvalid)
+					superMsgs[0] = msgPurged
+				} else {
+					superMsgs[0] = chat1.NewMessageUnboxedWithValid(mvalid)
 				}
-				superMsgs[0] = chat1.NewMessageUnboxedWithValid(mvalid)
 				if err = s.engine.WriteMessages(ctx, convID, uid, superMsgs); err != nil {
 					return err
 				}
@@ -621,9 +622,8 @@ func (s *Storage) applyExpunge(ctx context.Context, convID chat1.ConversationID,
 			continue
 		}
 		mvalid.ServerHeader.SupersededBy = expunge.Basis // Can be 0
-		var emptyBody chat1.MessageBody
-		mvalid.MessageBody = emptyBody
-		writeback = append(writeback, chat1.NewMessageUnboxedWithValid(mvalid))
+		msgPurged, _ := s.purgeMessage(mvalid)
+		writeback = append(writeback, msgPurged)
 	}
 	de("deleting %v messages", len(writeback))
 
@@ -833,4 +833,14 @@ func (s *Storage) IsTLFIdentifyBroken(ctx context.Context, tlfID chat1.TLFID) bo
 		return true
 	}
 	return idBroken
+}
+
+// Clears the body of a message and attempts to delete the remote asset if
+// applicable. Returns any assets that need to be purged to batch deletion
+func (s *Storage) purgeMessage(mvalid chat1.MessageUnboxedValid) (chat1.MessageUnboxed, []chat1.Asset) {
+	// TODO we should purge any assets from our local cache as well.
+	assets := utils.AssetsForMessage(s.G(), mvalid.MessageBody)
+	var emptyBody chat1.MessageBody
+	mvalid.MessageBody = emptyBody
+	return chat1.NewMessageUnboxedWithValid(mvalid), assets
 }
