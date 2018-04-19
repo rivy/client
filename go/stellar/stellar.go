@@ -183,7 +183,7 @@ func LookupRecipient(ctx context.Context, g *libkb.GlobalContext, to RecipientIn
 		return &r, nil
 	}
 
-	user, err := libkb.LoadUser(libkb.NewLoadUserByNameArg(g, string(to)))
+	user, err := libkb.LoadUser(libkb.NewLoadUserByNameArg(g, string(to)).WithNetContext(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -212,7 +212,6 @@ func makePostFromCurrentUser(ctx context.Context, g *libkb.GlobalContext, acctID
 	post := stellar1.PaymentPost{
 		Members: stellar1.Members{
 			FromStellar:  stellar1.AccountID(acctID.String()),
-			FromKeybase:  g.Env.GetUsername().String(),
 			From:         meUpk.ToUserVersion(),
 			FromDeviceID: deviceID,
 		},
@@ -221,7 +220,6 @@ func makePostFromCurrentUser(ctx context.Context, g *libkb.GlobalContext, acctID
 		post.Members.ToStellar = stellar1.AccountID(recipient.AccountID.String())
 		if recipient.User != nil {
 			post.Members.To = recipient.User.ToUserVersion()
-			post.Members.ToKeybase = recipient.User.GetName()
 		}
 	}
 	return post, nil
