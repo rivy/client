@@ -175,7 +175,7 @@ const userIsActiveInTeamHelper = (
   return member && member.active
 }
 
-const getBadgeSubscribe = (state: TypedState, teamname: string): boolean =>
+const isTeamWithChosenChannels = (state: TypedState, teamname: string): boolean =>
   !state.teams.teamsWithChosenChannels.has(teamname)
 
 const getTeamChannelInfos = (
@@ -364,7 +364,6 @@ export const makeResetUser: I.RecordFactory<Types._ResetUser> = I.Record({
 })
 
 export {
-  getBadgeSubscribe,
   getRole,
   getCanPerform,
   hasCanPerform,
@@ -391,6 +390,7 @@ export {
   isBigTeam,
   isOwner,
   isSubteam,
+  isTeamWithChosenChannels,
   serviceRetentionPolicyToRetentionPolicy,
   retentionPolicyToServiceRetentionPolicy,
   baseRetentionPolicies,
